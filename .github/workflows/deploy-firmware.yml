@@ -34,7 +34,8 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        role-to-assume: ${{ vars.AWS_ROLE_ARN_FW }}
+        # 이 레포 master push에서만 assume할 수 있는 역할이라 ARN은 비밀값이 아니다
+        role-to-assume: arn:aws:iam::564714665430:role/github-actions-dcent-biometric-firmware
         aws-region: ap-northeast-2
 
     - name: Deploy to AWS S3
