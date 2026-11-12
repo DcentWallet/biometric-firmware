@@ -12,6 +12,11 @@ jobs:
 
     runs-on: ubuntu-22.04
 
+    # AWS는 장기 액세스 키 대신 OIDC 역할로 접근한다. 역할은 이 레포 master push에서만 쓸 수 있다
+    permissions:
+      contents: write   # Create Release
+      id-token: write   # AWS OIDC
+
     steps:
     - uses: actions/checkout@v2
     
@@ -26,16 +31,14 @@ jobs:
       with:
         tag_name: ${{ env.TAG_NAME }}
 
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ vars.AWS_ROLE_ARN_FW }}
+        aws-region: ap-northeast-2
+
     - name: Deploy to AWS S3
       run: aws s3 cp --recursive bin ${{ secrets.AWS_S3_BUCKET_FW }}
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_EC2_METADATA_DISABLED: true
-        
-    - name: CoundFront Cache clear 
+
+    - name: CloudFront Cache clear
       run: aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_CF_DISTRIBUTION_ID }} --paths ${{ secrets.AWS_CF_BIOMETRIC_FIRMWARE }}
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_EC2_METADATA_DISABLED: true
